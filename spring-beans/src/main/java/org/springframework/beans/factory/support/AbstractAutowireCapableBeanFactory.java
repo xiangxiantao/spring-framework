@@ -177,6 +177,7 @@ public abstract class AbstractAutowireCapableBeanFactory extends AbstractBeanFac
 		ignoreDependencyInterface(BeanNameAware.class);
 		ignoreDependencyInterface(BeanFactoryAware.class);
 		ignoreDependencyInterface(BeanClassLoaderAware.class);
+		//org.graalvm.nativeimage.imagecode 此系统变量不为空，走SimpleInstantiationStrategy
 		if (NativeDetector.inNativeImage()) {
 			this.instantiationStrategy = new SimpleInstantiationStrategy();
 		}

@@ -553,9 +553,17 @@ public abstract class AbstractApplicationContext extends DefaultResourceLoader
 			prepareRefresh();
 
 			// Tell the subclass to refresh the internal bean factory.
+			//1.将容器的刷新开关从未刷新置为已刷新，防止容器重复refresh
+			//2.为内置ConfigurableListableBeanFactory设置一个id
+			//3.获取内置ConfigurableListableBeanFactory
 			ConfigurableListableBeanFactory beanFactory = obtainFreshBeanFactory();
 
 			// Prepare the bean factory for use in this context.
+			// 1.注入内建依赖
+			// 2.注入内置单例bean
+			// 3.注入3个内置BeanPostProcessor（包括处理Aware接口的，处理早期Listener的）
+			// 4.设置属性解析器
+			// 5.设置el表达式解析器
 			prepareBeanFactory(beanFactory);
 
 			try {
@@ -685,11 +693,23 @@ public abstract class AbstractApplicationContext extends DefaultResourceLoader
 		// Tell the internal bean factory to use the context's class loader etc.
 		beanFactory.setBeanClassLoader(getClassLoader());
 		if (!shouldIgnoreSpel) {
+			//设置el表达式解析器（#{...}）
 			beanFactory.setBeanExpressionResolver(new StandardBeanExpressionResolver(beanFactory.getBeanClassLoader()));
 		}
+		//设置属性解析器PropertyEditorRegistrar
 		beanFactory.addPropertyEditorRegistrar(new ResourceEditorRegistrar(this, getEnvironment()));
 
 		// Configure the bean factory with context callbacks.
+		//为容器中添加一个ApplicationContextAwareProcessor，这是容器中添加的第一个BeanPostProcessor
+		//ApplicationContextAwareProcessor的作用：
+		//判断bean是否实现了下面的Aware接口，如果实现了，这把相应的内建bean或单例对象赋给该bean
+		//1.EnvironmentAware  -> applicationContext.getEnvironment()
+		//2.EmbeddedValueResolverAware -> embeddedValueResolver
+		//3.ResourceLoaderAware -> applicationContext
+		//4.ApplicationEventPublisherAware -> applicationContext
+		//5.MessageSourceAware -> applicationContext
+		//6.ApplicationContextAware -> applicationContext
+		//7.ApplicationStartupAware -> applicationContext.getApplicationStartup()
 		beanFactory.addBeanPostProcessor(new ApplicationContextAwareProcessor(this));
 		beanFactory.ignoreDependencyInterface(EnvironmentAware.class);
 		beanFactory.ignoreDependencyInterface(EmbeddedValueResolverAware.class);
@@ -699,6 +719,7 @@ public abstract class AbstractApplicationContext extends DefaultResourceLoader
 		beanFactory.ignoreDependencyInterface(ApplicationContextAware.class);
 		beanFactory.ignoreDependencyInterface(ApplicationStartupAware.class);
 
+		//添加容器内建依赖
 		// BeanFactory interface not registered as resolvable type in a plain factory.
 		// MessageSource registered (and found for autowiring) as a bean.
 		beanFactory.registerResolvableDependency(BeanFactory.class, beanFactory);
@@ -707,6 +728,7 @@ public abstract class AbstractApplicationContext extends DefaultResourceLoader
 		beanFactory.registerResolvableDependency(ApplicationContext.class, this);
 
 		// Register early post-processor for detecting inner beans as ApplicationListeners.
+		// 处理实现了ApplicationListener接口的bean
 		beanFactory.addBeanPostProcessor(new ApplicationListenerDetector(this));
 
 		// Detect a LoadTimeWeaver and prepare for weaving, if found.
@@ -717,6 +739,7 @@ public abstract class AbstractApplicationContext extends DefaultResourceLoader
 		}
 
 		// Register default environment beans.
+		// 在beanFactory中注入下面的单例对象
 		if (!beanFactory.containsLocalBean(ENVIRONMENT_BEAN_NAME)) {
 			beanFactory.registerSingleton(ENVIRONMENT_BEAN_NAME, getEnvironment());
 		}
