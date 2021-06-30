@@ -2,6 +2,8 @@ plugins {
     id 'java'
 }
 
+group 'org.springframework'
+version '5.3.9-SNAPSHOT'
 
 repositories {
     mavenCentral()
