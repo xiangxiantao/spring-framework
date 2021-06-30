@@ -63,6 +63,8 @@ import org.springframework.beans.BeansException;
 public interface BeanFactoryPostProcessor {
 
 	/**
+	 * 在所有beanDefinition已经加载，且没有Bean实例化之前，修改application的内置beanFactory
+	 * 该方法可以支持修改beanDefinition的属性配置，甚至可以提前初始化bean
 	 * Modify the application context's internal bean factory after its standard
 	 * initialization. All bean definitions will have been loaded, but no beans
 	 * will have been instantiated yet. This allows for overriding or adding
