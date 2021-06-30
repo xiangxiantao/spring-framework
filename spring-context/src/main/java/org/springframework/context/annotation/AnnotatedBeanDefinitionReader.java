@@ -68,6 +68,7 @@ public class AnnotatedBeanDefinitionReader {
 	 * @see #setEnvironment(Environment)
 	 */
 	public AnnotatedBeanDefinitionReader(BeanDefinitionRegistry registry) {
+		//注入registry，并且初始化Environment对象
 		this(registry, getOrCreateEnvironment(registry));
 	}
 

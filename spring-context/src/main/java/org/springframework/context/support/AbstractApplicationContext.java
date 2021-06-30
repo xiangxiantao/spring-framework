@@ -547,6 +547,9 @@ public abstract class AbstractApplicationContext extends DefaultResourceLoader
 			StartupStep contextRefresh = this.applicationStartup.start("spring.context.refresh");
 
 			// Prepare this context for refreshing.
+			//1.对于通过ConfigurablePropertyResolver#setRequiredProperties注明为必填项的配置属性进行存在校验（AnnotationBeanDefinitionReader是ConfigurablePropertyResolver的实现类）
+			//2.容器的启停开关状态标志为修改
+			//3.向容器中注册早期事件监听器容器和早期事件容器
 			prepareRefresh();
 
 			// Tell the subclass to refresh the internal bean factory.
@@ -631,6 +634,7 @@ public abstract class AbstractApplicationContext extends DefaultResourceLoader
 		}
 
 		// Initialize any placeholder property sources in the context environment.
+		//非web环境下默认是空的实现
 		initPropertySources();
 
 		// Validate that all properties marked as required are resolvable:
