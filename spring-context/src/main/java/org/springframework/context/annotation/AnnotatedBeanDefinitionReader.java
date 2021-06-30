@@ -250,16 +250,25 @@ public class AnnotatedBeanDefinitionReader {
 			@Nullable Class<? extends Annotation>[] qualifiers, @Nullable Supplier<T> supplier,
 			@Nullable BeanDefinitionCustomizer[] customizers) {
 
+		//进来就先把class对象转为一个BeanDefinition，此时这个BeanDefinition中只有class信息和注解类上注解信息
 		AnnotatedGenericBeanDefinition abd = new AnnotatedGenericBeanDefinition(beanClass);
+		//处理@Conditional注解
 		if (this.conditionEvaluator.shouldSkip(abd.getMetadata())) {
 			return;
 		}
 
+		//supplier会优先于所有的构造器和工厂方法进行类的实例化，但是不会影响属性设置
 		abd.setInstanceSupplier(supplier);
+
+		//处理scope，没有设置，默认返回singleton；@Scope("scopeName")会在这个方法中进行处理，获得scopeName
 		ScopeMetadata scopeMetadata = this.scopeMetadataResolver.resolveScopeMetadata(abd);
 		abd.setScope(scopeMetadata.getScopeName());
+
+		//创建beanName AnnotationBeanNameGenerator提供能力，但以接口入参为优先
 		String beanName = (name != null ? name : this.beanNameGenerator.generateBeanName(abd, this.registry));
 
+		//将以下几个注解标注的值设置到abd中
+		//1.@Lazy 2.@Primary 3.@Role 4.@DependesOn 5.@Description
 		AnnotationConfigUtils.processCommonDefinitionAnnotations(abd);
 		if (qualifiers != null) {
 			for (Class<? extends Annotation> qualifier : qualifiers) {
@@ -280,8 +289,13 @@ public class AnnotatedBeanDefinitionReader {
 			}
 		}
 
+		//definitionHolder 保存的是beanDefinition和beanName(还可以有别名)
 		BeanDefinitionHolder definitionHolder = new BeanDefinitionHolder(abd, beanName);
+		//如果@Scope设置了代理，这里将会返回一个代理对象
 		definitionHolder = AnnotationConfigUtils.applyScopedProxyMode(scopeMetadata, definitionHolder, this.registry);
+		//将definitionHolder中的beanDefinition注册到registry对象中
+		//DefaultListableBeanFactory.registerBeanDefinition(String beanName, BeanDefinition beanDefinition)
+		//最后的结果：DefaultListableBeanFactory中的beanDefinitionMap中存入一个beanDefinition，beanDefinitionNames中存入beanName
 		BeanDefinitionReaderUtils.registerBeanDefinition(definitionHolder, this.registry);
 	}
 
