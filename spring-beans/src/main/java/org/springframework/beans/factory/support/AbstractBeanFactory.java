@@ -252,7 +252,7 @@ public abstract class AbstractBeanFactory extends FactoryBeanRegistrySupport imp
 		String beanName = transformedBeanName(name);
 		Object beanInstance;
 
-		// Eagerly check singleton cache for manually registered singletons.
+		// Eagerly check singleton cache for manually registered singletons.  获取容器中注册的单例  beanFactory.registerSingleton
 		Object sharedInstance = getSingleton(beanName);
 		if (sharedInstance != null && args == null) {
 			if (logger.isTraceEnabled()) {
@@ -1387,12 +1387,10 @@ public abstract class AbstractBeanFactory extends FactoryBeanRegistrySupport imp
 					// Use copy of given root bean definition.
 					if (bd instanceof RootBeanDefinition) {
 						mbd = ((RootBeanDefinition) bd).cloneBeanDefinition();
-					}
-					else {
+					} else {
 						mbd = new RootBeanDefinition(bd);
 					}
-				}
-				else {
+				} else {
 					// Child bean definition: needs to be merged with parent.
 					BeanDefinition pbd;
 					try {

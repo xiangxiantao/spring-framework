@@ -574,10 +574,11 @@ public abstract class AbstractApplicationContext extends DefaultResourceLoader
 				// Invoke factory processors registered as beans in the context.
 				//执行容器中注册的BeanFactoryPostProcessor
 				//默认容器中并没有注册，可以通过addBeanFactoryPostProcessor进行注册
-				//
+				//这里还会回调BeanDefinitionRegistryPostProcessor进行其他beanDefinition的注册
 				invokeBeanFactoryPostProcessors(beanFactory);
 
 				// Register bean processors that intercept bean creation.
+				//按照顺序向容器中注册BeanPostProcessors
 				registerBeanPostProcessors(beanFactory);
 				beanPostProcess.end();
 
@@ -588,12 +589,16 @@ public abstract class AbstractApplicationContext extends DefaultResourceLoader
 				initApplicationEventMulticaster();
 
 				// Initialize other special beans in specific context subclasses.
+				//这个扩展方法在Spring boot中会被扩展用来启动web 容器
 				onRefresh();
 
 				// Check for listener beans and register them.
+				//1. 注册容器内置的listener
+				//2. 注册实现了ApplicationListener接口的类
 				registerListeners();
 
 				// Instantiate all remaining (non-lazy-init) singletons.
+				//实例化所有非懒加载的单例bean
 				finishBeanFactoryInitialization(beanFactory);
 
 				// Last step: publish corresponding event.
@@ -919,6 +924,7 @@ public abstract class AbstractApplicationContext extends DefaultResourceLoader
 	 */
 	protected void finishBeanFactoryInitialization(ConfigurableListableBeanFactory beanFactory) {
 		// Initialize conversion service for this context.
+		// 将conversionService bean注册到容器中用于类型转换
 		if (beanFactory.containsBean(CONVERSION_SERVICE_BEAN_NAME) &&
 				beanFactory.isTypeMatch(CONVERSION_SERVICE_BEAN_NAME, ConversionService.class)) {
 			beanFactory.setConversionService(
@@ -928,6 +934,7 @@ public abstract class AbstractApplicationContext extends DefaultResourceLoader
 		// Register a default embedded value resolver if no BeanFactoryPostProcessor
 		// (such as a PropertySourcesPlaceholderConfigurer bean) registered any before:
 		// at this point, primarily for resolution in annotation attribute values.
+		// 注入嵌入式属性解析器，例如PropertySourcesPlaceholderConfigurer ，用于解析占位符
 		if (!beanFactory.hasEmbeddedValueResolver()) {
 			beanFactory.addEmbeddedValueResolver(strVal -> getEnvironment().resolvePlaceholders(strVal));
 		}
@@ -942,7 +949,10 @@ public abstract class AbstractApplicationContext extends DefaultResourceLoader
 		beanFactory.setTempClassLoader(null);
 
 		// Allow for caching all bean definition metadata, not expecting further changes.
+		// 冻结所有的beanDefinition的元数据，避免更改，因为马上要进行单例bean的初始化了
+		// 冻结的本质就是把所有beanDefinitionName放入DefaultListableBeanFactory的frozenBeanDefinitionNames属性中
 		beanFactory.freezeConfiguration();
+
 
 		// Instantiate all remaining (non-lazy-init) singletons.
 		beanFactory.preInstantiateSingletons();
