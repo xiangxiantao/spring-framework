@@ -167,6 +167,7 @@ public abstract class BeanDefinitionReaderUtils {
 		String[] aliases = definitionHolder.getAliases();
 		if (aliases != null) {
 			for (String alias : aliases) {
+				//TODO
 				registry.registerAlias(beanName, alias);
 			}
 		}

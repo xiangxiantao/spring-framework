@@ -33,6 +33,7 @@ public class BridgeMethodAutowiringTests {
 		AnnotationConfigApplicationContext ctx = new AnnotationConfigApplicationContext();
 		ctx.register(UserServiceImpl.class, Foo.class);
 		ctx.refresh();
+		System.out.println("===================" + ctx.getBean(UserServiceImpl.class));
 		assertThat(ctx.getBean(UserServiceImpl.class).object).isNotNull();
 	}
 

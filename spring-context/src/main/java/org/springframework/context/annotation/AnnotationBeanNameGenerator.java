@@ -75,6 +75,15 @@ public class AnnotationBeanNameGenerator implements BeanNameGenerator {
 	private final Map<String, Set<String>> metaAnnotationTypesCache = new ConcurrentHashMap<>();
 
 
+	/**
+	 * AnnotatedBeanDefinition构建bean名称的过程
+	 * 1.从@Component及其衍生注解中取value值作为注解
+	 * 2.如果没有注解或者没有value值，取类名的简写并且首字母小写作为bean名称
+	 * @param definition the bean definition to generate a name for
+	 * @param registry the bean definition registry that the given definition
+	 * is supposed to be registered with
+	 * @return
+	 */
 	@Override
 	public String generateBeanName(BeanDefinition definition, BeanDefinitionRegistry registry) {
 		if (definition instanceof AnnotatedBeanDefinition) {
@@ -95,16 +104,20 @@ public class AnnotationBeanNameGenerator implements BeanNameGenerator {
 	 */
 	@Nullable
 	protected String determineBeanNameFromAnnotation(AnnotatedBeanDefinition annotatedDef) {
+		//amd中包含了类上标注的所有注解
 		AnnotationMetadata amd = annotatedDef.getMetadata();
+		//获取到类上标注注解的所有类型名
 		Set<String> types = amd.getAnnotationTypes();
 		String beanName = null;
 		for (String type : types) {
+			//获取标注在注解类上的值
 			AnnotationAttributes attributes = AnnotationConfigUtils.attributesFor(amd, type);
 			if (attributes != null) {
 				Set<String> metaTypes = this.metaAnnotationTypesCache.computeIfAbsent(type, key -> {
 					Set<String> result = amd.getMetaAnnotationTypes(key);
 					return (result.isEmpty() ? Collections.emptySet() : result);
 				});
+				//取Component注解的value属性作为beanName
 				if (isStereotypeWithNameValue(type, metaTypes, attributes)) {
 					Object value = attributes.get("value");
 					if (value instanceof String) {
@@ -164,9 +177,12 @@ public class AnnotationBeanNameGenerator implements BeanNameGenerator {
 	 * @return the default bean name (never {@code null})
 	 */
 	protected String buildDefaultBeanName(BeanDefinition definition) {
+		//获取bean的全限定名
 		String beanClassName = definition.getBeanClassName();
 		Assert.state(beanClassName != null, "No bean class name set");
+		//截取最后一个.后面的字符作为shortName
 		String shortClassName = ClassUtils.getShortName(beanClassName);
+		//Introspector.decapitalize(shortClassName)首字母小写
 		return Introspector.decapitalize(shortClassName);
 	}
 

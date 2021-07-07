@@ -578,6 +578,8 @@ public abstract class AbstractApplicationContext extends DefaultResourceLoader
 				invokeBeanFactoryPostProcessors(beanFactory);
 
 				// Register bean processors that intercept bean creation.
+				// 执行注册到容器中的BeanPostProcessor实现类的相关方法
+				// spring通过这一步骤完成了许多重要操作，包括@Configuration类中@Bean注解的方法解析为BeanDefinition等工作
 				//按照顺序向容器中注册BeanPostProcessors
 				registerBeanPostProcessors(beanFactory);
 				beanPostProcess.end();
@@ -952,7 +954,6 @@ public abstract class AbstractApplicationContext extends DefaultResourceLoader
 		// 冻结所有的beanDefinition的元数据，避免更改，因为马上要进行单例bean的初始化了
 		// 冻结的本质就是把所有beanDefinitionName放入DefaultListableBeanFactory的frozenBeanDefinitionNames属性中
 		beanFactory.freezeConfiguration();
-
 
 		// Instantiate all remaining (non-lazy-init) singletons.
 		beanFactory.preInstantiateSingletons();
