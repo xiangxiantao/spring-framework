@@ -721,6 +721,7 @@ public class AutowiredAnnotationBeanPostProcessor implements SmartInstantiationA
 			}
 			if (arguments != null) {
 				try {
+					//打开方法权限，调用注入方法
 					ReflectionUtils.makeAccessible(method);
 					method.invoke(bean, arguments);
 				}
@@ -745,33 +746,45 @@ public class AutowiredAnnotationBeanPostProcessor implements SmartInstantiationA
 
 		@Nullable
 		private Object[] resolveMethodArguments(Method method, Object bean, @Nullable String beanName) {
+			//获取方法参数数量
 			int argumentCount = method.getParameterCount();
+			//创建入参对象数组（返回值）
 			Object[] arguments = new Object[argumentCount];
+			//创建依赖描述对象数组（每一个入参对应一个DependencyDescriptor）
 			DependencyDescriptor[] descriptors = new DependencyDescriptor[argumentCount];
 			Set<String> autowiredBeans = new LinkedHashSet<>(argumentCount);
 			Assert.state(beanFactory != null, "No BeanFactory available");
 			TypeConverter typeConverter = beanFactory.getTypeConverter();
+			//遍历每一个入参
 			for (int i = 0; i < arguments.length; i++) {
+				//获取入参信息
 				MethodParameter methodParam = new MethodParameter(method, i);
+				//创建依赖描述
 				DependencyDescriptor currDesc = new DependencyDescriptor(methodParam, this.required);
+				//设置bean的类
 				currDesc.setContainingClass(bean.getClass());
 				descriptors[i] = currDesc;
 				try {
+					//进行依赖处理，获取依赖对象
 					Object arg = beanFactory.resolveDependency(currDesc, beanName, autowiredBeans, typeConverter);
 					if (arg == null && !this.required) {
 						arguments = null;
 						break;
 					}
+					//将依赖对象放入结果数组
 					arguments[i] = arg;
 				}
 				catch (BeansException ex) {
 					throw new UnsatisfiedDependencyException(null, beanName, new InjectionPoint(methodParam), ex);
 				}
 			}
+
+			//下面看起来就是在缓存，先不看了
 			synchronized (this) {
 				if (!this.cached) {
 					if (arguments != null) {
 						DependencyDescriptor[] cachedMethodArguments = Arrays.copyOf(descriptors, arguments.length);
+						//注册bean与依赖bean之间的对应关系，主要是为了在销毁bean时保持先后关系：必须先销毁依赖的bean，才能销毁本身
 						registerDependentBeans(beanName, autowiredBeans);
 						if (autowiredBeans.size() == argumentCount) {
 							Iterator<String> it = autowiredBeans.iterator();
@@ -780,6 +793,7 @@ public class AutowiredAnnotationBeanPostProcessor implements SmartInstantiationA
 								String autowiredBeanName = it.next();
 								if (beanFactory.containsBean(autowiredBeanName) &&
 										beanFactory.isTypeMatch(autowiredBeanName, paramTypes[i])) {
+									//这里缓存一下依赖注入对象，注入beanName以及类型之间的关系，暂时没发现在哪生效的
 									cachedMethodArguments[i] = new ShortcutDependencyDescriptor(
 											descriptors[i], autowiredBeanName, paramTypes[i]);
 								}
